@@ -8,7 +8,6 @@
   :root {
     --mtm-crimson: #8B1A1A;
     --mtm-dark: #1a1a2e;
-    --mtm-card: #ffffff;
     --mtm-bg: #f4f4f8;
     --mtm-accent: #2d6a4f;
     --mtm-border: #e0e0e0;
@@ -29,7 +28,15 @@
     background: #fff8e1; border-left: 4px solid #f9a825; border-radius: var(--radius);
     font-size: 0.92rem;
   }
-  .instructions strong { color: var(--mtm-dark); }
+
+  .scale-legend {
+    max-width: 900px; margin: 0 auto 1rem; padding: 0.75rem 1.5rem;
+    background: white; border-radius: var(--radius); box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; font-size: 0.82rem;
+  }
+  .scale-legend .chip {
+    padding: 0.3rem 0.75rem; border-radius: 20px; color: white; font-weight: 600;
+  }
 
   .summary-bar {
     max-width: 900px; margin: 1rem auto; padding: 1rem 1.5rem;
@@ -60,6 +67,15 @@
   .client-body { padding: 0.5rem 0; display: none; }
   .client-body.open { display: block; }
 
+  .meeting-schedule {
+    margin: 0.5rem 0 0.75rem; padding: 0.75rem 1.25rem;
+    background: #e8f5e9; border-left: 4px solid var(--mtm-accent); border-radius: var(--radius);
+    font-size: 0.85rem;
+  }
+  .meeting-schedule strong { color: var(--mtm-dark); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .meeting-schedule ul { margin: 0.3rem 0 0 1.2rem; padding: 0; }
+  .meeting-schedule li { margin: 0.15rem 0; }
+
   .category {
     margin: 0.75rem 0; background: white; border-radius: var(--radius);
     box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden;
@@ -71,31 +87,29 @@
   }
 
   .task-row {
-    padding: 0.6rem 1.25rem; border-bottom: 1px solid #f0f0f0;
-    display: flex; align-items: center; gap: 1rem;
+    padding: 0.75rem 1.25rem; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: flex-start; gap: 1rem;
   }
   .task-row:last-child { border-bottom: none; }
   .task-desc { flex: 1; font-size: 0.88rem; }
   .task-detail { color: #888; font-size: 0.78rem; display: block; margin-top: 2px; }
 
-  .score-control { display: flex; align-items: center; gap: 0.5rem; min-width: 180px; }
-  .score-control input[type=range] { width: 100px; accent-color: var(--mtm-crimson); cursor: pointer; }
-  .score-badge {
-    width: 32px; height: 32px; border-radius: 50%; display: flex;
-    align-items: center; justify-content: center; font-weight: 700;
-    font-size: 0.85rem; color: white; transition: background 0.2s;
+  .score-buttons { display: flex; gap: 4px; min-width: 200px; align-items: center; flex-shrink: 0; }
+  .score-btn {
+    width: 34px; height: 34px; border-radius: 50%; border: 2px solid #ddd;
+    background: white; cursor: pointer; font-weight: 700; font-size: 0.8rem;
+    color: #999; transition: all 0.15s; display: flex; align-items: center;
+    justify-content: center;
   }
-  .score-0 { background: #ccc; color: #666; }
-  .score-low { background: #e57373; }
-  .score-mid { background: #ffb74d; }
-  .score-high { background: #81c784; }
-  .score-top { background: var(--mtm-accent); }
-
-  .na-btn {
-    font-size: 0.7rem; padding: 2px 6px; border: 1px solid #ccc; background: white;
-    border-radius: 4px; cursor: pointer; color: #888;
-  }
-  .na-btn.active { background: #eee; border-color: #999; color: #555; }
+  .score-btn:hover { border-color: #999; transform: scale(1.1); }
+  .score-btn.selected { color: white; border-color: transparent; transform: scale(1.1); }
+  .score-btn.s1.selected { background: #e53935; }
+  .score-btn.s2.selected { background: #fb8c00; }
+  .score-btn.s3.selected { background: #fdd835; color: #333; }
+  .score-btn.s4.selected { background: #7cb342; }
+  .score-btn.s5.selected { background: #2e7d32; }
+  .score-btn.na { font-size: 0.65rem; width: auto; padding: 0 8px; border-radius: 6px; }
+  .score-btn.na.selected { background: #888; }
 
   .actions {
     max-width: 900px; margin: 2rem auto; padding: 0 1.5rem;
@@ -127,9 +141,10 @@
   footer { text-align: center; padding: 2rem; font-size: 0.78rem; color: #999; }
 
   @media (max-width: 640px) {
-    .task-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-    .score-control { min-width: unset; }
+    .task-row { flex-direction: column; gap: 0.5rem; }
+    .score-buttons { min-width: unset; }
     .summary-bar { flex-direction: column; gap: 0.75rem; }
+    .scale-legend { flex-direction: column; align-items: center; }
   }
 </style>
 </head>
@@ -137,11 +152,19 @@
 
 <header>
   <h1>Client Task Confidence Scoring</h1>
-  <p>Matthew — rate your confidence (1-10) on each task Joshua currently performs for these three clients. This helps us plan the transition clearly.</p>
+  <p>Matthew — rate your confidence on each task Joshua currently performs for these three clients. This helps us plan the transition clearly.</p>
 </header>
 
 <div class="instructions">
-  <strong>How to use:</strong> Slide each task to your confidence level: <strong>1-3</strong> = "I'd need significant guidance," <strong>4-6</strong> = "I could handle with some ramp-up," <strong>7-9</strong> = "Comfortable, minimal support," <strong>10</strong> = "I've got this." Use <strong>N/A</strong> if a task wouldn't transfer to you. Click <strong>Export Results</strong> when done.
+  Click a number for each task. Use <strong>N/A</strong> if a task wouldn't transfer to you. Click <strong>Export Results</strong> when done — it downloads a file you can send back to Joshua.
+</div>
+
+<div class="scale-legend">
+  <span class="chip" style="background:#e53935">1 = Need significant guidance</span>
+  <span class="chip" style="background:#fb8c00">2 = Could learn with support</span>
+  <span class="chip" style="background:#fdd835;color:#333">3 = Moderate confidence</span>
+  <span class="chip" style="background:#7cb342">4 = Comfortable, minimal help</span>
+  <span class="chip" style="background:#2e7d32">5 = I've got this</span>
 </div>
 
 <div class="summary-bar" id="summaryBar">
@@ -163,7 +186,6 @@
 
 <div class="actions">
   <button class="btn btn-primary" onclick="exportResults()">Export Results</button>
-  <button class="btn btn-secondary" onclick="saveLocal()">Save Progress</button>
   <button class="btn btn-secondary" onclick="expandAll()">Expand All</button>
   <button class="btn btn-secondary" onclick="collapseAll()">Collapse All</button>
 </div>
@@ -176,410 +198,212 @@
 </footer>
 
 <script>
-const DATA = [
+var SCALE_LABELS = {
+  1: "Need significant guidance",
+  2: "Could learn with support",
+  3: "Moderate confidence",
+  4: "Comfortable, minimal help",
+  5: "I've got this"
+};
+
+var DATA = [
   {
     client: "Center for Employment Opportunities (CEO)",
-    meta: "$7,500/mo | Renewed through Sep 30, 2026 | Mon 1pm IT + Thu 12pm GRC",
+    meta: "$7,500/mo | Through Sep 30, 2026 | Google Workspace + Salesforce",
+    meetings: [
+      "Mondays 1:00 PM ET / 10:00 AM PT — IT vCISO check-in (1 hr)",
+      "Thursdays 12:00 PM ET / 9:00 AM PT — GRC vCISO check-in (1 hr)"
+    ],
     categories: [
       {
-        name: "Third-Party Risk Management",
-        icon: "shield",
+        name: "Security Governance",
         tasks: [
-          { desc: "Conduct vendor security assessments", detail: "Using SecurityScorecard, SOC 2 report analysis, trust center reviews" },
-          { desc: "Write formal vendor recommendation memos", detail: "Approved / Approved with Conditions / Not Approved for each vendor" },
-          { desc: "Draft recommended contract security language", detail: "E.g., SOC 2 contingency clauses, DPA requirements" },
-          { desc: "Send lightweight security questionnaires to smaller vendors" },
-          { desc: "Review vendor responses to SecurityScorecard findings", detail: "Issue addendum reports when vendors remediate" },
-          { desc: "Evaluate GRC platform options", detail: "E.g., Vanta pricing analysis ($35K-55K/yr) with nonprofit discounts" }
+          { desc: "Vendor security assessments (TPRM)", detail: "SecurityScorecard analysis, SOC 2 reviews, recommendation memos, contract security language" },
+          { desc: "Security dashboard and metrics management", detail: "Maintain ops + board views, coordinate data exports from KnowBe4/Intune/etc., track data quality" },
+          { desc: "SecurityScorecard monitoring and remediation planning", detail: "External attack surface monitoring, remediation plans, pen test vendor management" },
+          { desc: "Security policy development", detail: "Vulnerability management, DLP roadmap, compliance assessment cadence" },
+          { desc: "Incident response planning and tabletop exercises", detail: "IR process, scenario generation, coordination with legal/CTO" },
+          { desc: "Grant/funder security documentation", detail: "Rapid-turnaround security narratives for grant applications" }
         ]
       },
       {
-        name: "Security Dashboard and Metrics",
-        icon: "chart",
+        name: "AI and Technology Governance",
         tasks: [
-          { desc: "Maintain custom security dashboard", detail: "Main ops view + Executive Board View (print-friendly single-page)" },
-          { desc: "Manage data pipeline for dashboard updates", detail: "Google Drive folder structure, CSV export schedules from source systems" },
-          { desc: "Track and resolve data quality issues", detail: "Data confidence badges: Verified / Needs Refresh / Unverified" },
-          { desc: "Coordinate monthly/quarterly data exports with IT team", detail: "8 monthly + 3 quarterly exports from KnowBe4, Intune, etc." }
+          { desc: "AI policy development", detail: "AI Acceptable Use Policy, Data Classification Policy (critical path for AI decisions)" },
+          { desc: "AI tool evaluation and adoption framework", detail: "Yellow-light/red-line framework, evaluate tools like Vinton AI, Claude Enterprise, CultureAmp" },
+          { desc: "Google Workspace AI controls management", detail: "Gemini defaults, Meet transcription controls, block unauthorized AI apps (Otter, Fireflies), allowlist model" },
+          { desc: "AI use case discovery for legal and program teams", detail: "Workflow interview tools, consent requirements for participant-facing AI" }
         ]
       },
       {
-        name: "Security Posture Management",
-        icon: "lock",
+        name: "IT Operations Advisory",
         tasks: [
-          { desc: "Monitor SecurityScorecard for external attack surface", detail: "Deliver remediation plans based on findings" },
-          { desc: "Manage penetration testing vendor relationship", detail: "Selected TargetDefense as replacement vendor; coordinate scoping" },
-          { desc: "Draft vulnerability management priority lists", detail: "Google Workspace, M365, Salesforce, public/VPN" },
-          { desc: "Evaluate continuous penetration testing options" }
+          { desc: "Endpoint and device management oversight", detail: "Intune/MDM rollout, BYOD elimination, BitLocker tracking, mobile MFA proposals" },
+          { desc: "IT asset inventory management", detail: "Dashboard, account cleanup, MSP documentation consolidation" },
+          { desc: "Vendor and industry advisory", detail: "Evaluate vendor pitches (e.g., declined Gartner, recommended NTEN), industry resource curation" }
         ]
       },
       {
-        name: "Policy Development and Governance",
-        icon: "policy",
+        name: "Meeting and Engagement Management",
         tasks: [
-          { desc: "Lead AI Acceptable Use Policy development", detail: "Multiple review cycles with legal and leadership" },
-          { desc: "Lead Data Classification Policy development", detail: "Critical-path blocker for AI enterprise decisions" },
-          { desc: "Draft DLP (Data Loss Prevention) Roadmap", detail: "Google Workspace DLP vs. Trend Micro coverage analysis" },
-          { desc: "Review and update Vulnerability Management Policy" },
-          { desc: "Review consent forms for participant data", detail: "Monday.com use case, emerging state regulations" },
-          { desc: "Assess compliance assessment cadence and process" }
-        ]
-      },
-      {
-        name: "Google Workspace Administration and AI Controls",
-        icon: "gear",
-        tasks: [
-          { desc: "Research and document Google Workspace AI controls", detail: "Gemini personalization, Meet transcription, admin toggle paths" },
-          { desc: "Manage blocking of unauthorized AI apps", detail: "Otter.ai, Read.ai, Fireflies via OAuth blocking, Chrome extension blocking" },
-          { desc: "Guide allowlist model for third-party apps" },
-          { desc: "Coordinate Google Workspace support tickets with IT" },
-          { desc: "Advise on Google Vault retention rules" }
-        ]
-      },
-      {
-        name: "AI Strategy and Tool Evaluation",
-        icon: "ai",
-        tasks: [
-          { desc: "Define AI adoption framework (yellow light / red line)", detail: "Acceptable risk with register vs. hard stops for certain data" },
-          { desc: "Evaluate AI tools for production use", detail: "Vinton AI, Claude/ChatGPT Enterprise, CultureAmp AI features" },
-          { desc: "Create legal workflow discovery tools", detail: "Built Gemini-based 10-question interview for legal team AI mapping" },
-          { desc: "Manage AI platform consolidation strategy" },
-          { desc: "Advise on AI for participant-facing use cases", detail: "Case notes, consent requirements, role-play scenarios" }
-        ]
-      },
-      {
-        name: "Meeting Facilitation and Agenda Management",
-        icon: "calendar",
-        tasks: [
-          { desc: "Prepare and send branded HTML agenda emails", detail: "Before both weekly meetings (IT Monday, GRC Thursday)" },
-          { desc: "Maintain running Google Doc for meeting agendas" },
-          { desc: "Facilitate prioritized agenda discussions", detail: "Voting, timeboxing, managing 8+ attendees" },
-          { desc: "Write detailed post-meeting summaries", detail: "Decisions, action items, risks, open questions" },
-          { desc: "Manage meeting invite lists as roles change" }
-        ]
-      },
-      {
-        name: "Endpoint and Device Management",
-        icon: "device",
-        tasks: [
-          { desc: "Oversee Intune/MDM rollout planning", detail: "BYOD elimination project" },
-          { desc: "Review Conditional Access / BYOD controls", detail: "Device wipe requirements, procurement, communications plan" },
-          { desc: "Draft mobile MFA backup proposals", detail: "Android/iOS backup testing for leadership and legal review" },
-          { desc: "Track BitLocker/encryption coverage" }
-        ]
-      },
-      {
-        name: "Incident Response and Tabletop Exercises",
-        icon: "alert",
-        tasks: [
-          { desc: "Drive incident response plan process" },
-          { desc: "Coordinate tabletop exercise scenarios", detail: "Using MTM tabletop writer tool; 2-3 scenarios with objectives" }
-        ]
-      },
-      {
-        name: "IT Asset Management",
-        icon: "server",
-        tasks: [
-          { desc: "Build and maintain IT asset inventory dashboard" },
-          { desc: "Review accounts to delete and endpoints to remove" },
-          { desc: "Consolidate MSP documentation" }
-        ]
-      },
-      {
-        name: "Grant and Funder Support",
-        icon: "money",
-        tasks: [
-          { desc: "Draft security plan narratives for grant applications", detail: "Salesforce data storage, RBAC, backup, encryption, MFA, SSO" },
-          { desc: "Provide rapid-turnaround security documentation for funders" }
-        ]
-      },
-      {
-        name: "Vendor and Industry Advisory",
-        icon: "building",
-        tasks: [
-          { desc: "Evaluate vendor outreach and recommend accept/decline", detail: "E.g., declined Gartner ($35K-70K), recommended NTEN ($250-$1K)" }
-        ]
-      },
-      {
-        name: "Contract and Engagement Management",
-        icon: "contract",
-        tasks: [
-          { desc: "Draft renewal proposals and manage contract cycle" },
-          { desc: "Conduct engagement retrospectives with client team" },
-          { desc: "Manage invoicing and late-payment communication" }
+          { desc: "Facilitate two weekly meetings with 8+ attendees", detail: "IT (Monday) and GRC (Thursday), prioritized agendas, manage cross-functional dynamics" },
+          { desc: "Meeting prep, agendas, and post-meeting summaries", detail: "Branded HTML agendas, running Google Doc, detailed write-ups with action items" },
+          { desc: "Contract lifecycle and invoicing", detail: "Renewal proposals, engagement retrospectives, payment follow-up" }
         ]
       }
     ]
   },
   {
     client: "BronxWorks",
-    meta: "Active engagement | Wed 12pm ET weekly check-in | ~950 staff across 45 sites",
+    meta: "$5,500/mo | Through Feb 2027 | M365 environment | ~950 staff, 45 sites",
+    meetings: [
+      "Tuesdays 11:00 AM ET / 8:00 AM PT \u2014 Joshua/Yonnel 1:1 (30 min)",
+      "Wednesdays 12:00 PM ET / 9:00 AM PT \u2014 vCIO weekly check-in (1 hr)",
+      "AI Working Group \u2014 as scheduled (typically Tuesdays 2:00 PM ET / 11:00 AM PT)"
+    ],
     categories: [
       {
-        name: "Security Program Management (vCISO)",
-        icon: "shield",
+        name: "Security Program (vCISO)",
         tasks: [
-          { desc: "Oversee Microsoft Secure Score remediation program", detail: "Track category scores, review implementation progress" },
-          { desc: "Manage pen testing program with Evolve Security", detail: "Track remediations, request retesting scope/cost, correlate findings" },
-          { desc: "Send proactive security advisories", detail: "E.g., device code phishing campaigns, FBI warnings, specific mitigations" },
-          { desc: "Manage endpoint security (Sophos + Defender)", detail: "Integration guidance, remediation plans" },
-          { desc: "Coordinate with RoundTable Technology on infrastructure", detail: "E.g., Cisco Duo decommissioning" },
-          { desc: "Manage CBIZ audit response", detail: "Add definitions, clarify config gaps, segment cameras" },
-          { desc: "Oversee passwordless/Entra Conditional Access rollout", detail: "Phased across ~950 users in 8 phases" },
-          { desc: "Guide M365 retention policy setup", detail: "7-year default, indefinite retention group, legal hold review" },
-          { desc: "Support annual IT audit preparation" }
-        ]
-      },
-      {
-        name: "Security Dashboarding and Metrics",
-        icon: "chart",
-        tasks: [
-          { desc: "Maintain and update the security dashboard", detail: "Vishali builds dashboards; coordinate data needs and reviews" },
-          { desc: "Produce weekly security metrics for check-ins" },
-          { desc: "Troubleshoot dashboard features (AskAI, data gaps)" },
-          { desc: "Share dashboard access with stakeholders" }
+          { desc: "Microsoft Secure Score and pen test oversight", detail: "Track remediations, manage Evolve Security relationship, correlate CBIZ audit findings" },
+          { desc: "Proactive security advisories and threat intelligence", detail: "Write and send advisories (phishing campaigns, FBI warnings), recommend specific mitigations" },
+          { desc: "Identity, access, and data governance", detail: "Passwordless/Entra rollout (8 phases, 950 users), M365 retention policies, Conditional Access" },
+          { desc: "Security dashboard and weekly metrics", detail: "Vishali builds dashboards; coordinate data needs, share with stakeholders" },
+          { desc: "Audit support and compliance", detail: "CBIZ response, annual IT audit prep, endpoint security (Sophos + Defender)" }
         ]
       },
       {
         name: "AI Advisory and Training",
-        icon: "ai",
         tasks: [
-          { desc: "Facilitate the AI Working Group", detail: "Cross-departmental, 8+ attendees, 3 parallel workstreams" },
-          { desc: "Design AI Champions Cohort program", detail: "4-6 week project-based training with Kirkpatrick-aligned curriculum" },
-          { desc: "Provide AI platform strategy recommendations", detail: "Microsoft Copilot vs. Claude vs. Google Workspace AI cost comparisons" },
-          { desc: "Draft AI Acceptable Use Policy and note-taker policy" },
-          { desc: "Conduct AI use case discovery with senior staff", detail: "Interview prompts, scoring, cross-departmental analysis" },
-          { desc: "Design and deliver AI training sessions", detail: "Demos, 90-minute cyber+AI training, prize budgets" },
-          { desc: "Guide Copilot Studio exploration", detail: "Walk staff through trial activation and agent building" },
-          { desc: "Research HIPAA-compliant AI phone tools", detail: "Context-aware transcriptions for case notes" }
+          { desc: "Facilitate AI Working Group and Champions program", detail: "Cross-departmental group, 3 workstreams, 4-6 week project-based cohort design" },
+          { desc: "AI platform strategy and policy", detail: "Copilot vs. Claude vs. Google AI cost analysis, AI Acceptable Use Policy, note-taker policy" },
+          { desc: "AI training design and delivery", detail: "Demos for senior staff, 90-min cyber+AI sessions, Kirkpatrick-aligned curriculum" },
+          { desc: "AI use case discovery and Copilot Studio guidance", detail: "Interview prompts for senior staff, trial activation walkthroughs, HIPAA-compliant tool research" }
         ]
       },
       {
         name: "Strategic vCIO Advisory",
-        icon: "policy",
         tasks: [
-          { desc: "Run weekly vCIO check-in meetings", detail: "With Erica Coleman and Yonnel Olivo, Wed 12pm ET" },
-          { desc: "Prepare detailed agendas and pre-meeting briefings" },
-          { desc: "Manage Asana board housekeeping during check-ins" },
-          { desc: "Advise on technology procurement", detail: "Admin rights, printing policies, IT purchase request workflows" },
-          { desc: "Provide infrastructure advisory", detail: "Current/desired state mapping: servers, firewalls, file sharing, device mgmt" },
-          { desc: "Prep intake process improvement ideas", detail: "Spreadsheet/database, AI automation, data analysis" }
+          { desc: "Run weekly check-in and manage Asana board", detail: "Agendas, pre-meeting briefings, task housekeeping with Erica and Yonnel" },
+          { desc: "Technology procurement and infrastructure advisory", detail: "Admin rights, printing policies, current/desired state mapping, intake process improvement" },
+          { desc: "Staff digital upskilling programs", detail: "SharePoint training, IT competency models, digital literacy track" }
         ]
       },
       {
-        name: "Staff Development and Digital Upskilling",
-        icon: "learn",
+        name: "Relationship and Admin",
         tasks: [
-          { desc: "Support digital upskilling track", detail: "Tyler/Erica lead; advise on content and approach" },
-          { desc: "Design SharePoint upskilling programs" },
-          { desc: "Review IT competency models" }
-        ]
-      },
-      {
-        name: "Relationship and Administrative",
-        icon: "people",
-        tasks: [
-          { desc: "Manage invoicing and follow up on past-due payments" },
-          { desc: "Maintain relationships with ~12 key stakeholders", detail: "Yonnel, Erica, Tyler, Gina Lee, Jake, Osayi, Pavel, Igor, Amy, Eileen, others" },
-          { desc: "Build personal rapport (non-work sharing, recommendations)" }
+          { desc: "Stakeholder relationship management (~12 contacts)", detail: "Yonnel, Erica, Tyler, Gina Lee, Jake, Osayi, Pavel, Igor, Amy, Eileen, and others" },
+          { desc: "Invoicing and payment follow-up" }
         ]
       }
     ]
   },
   {
     client: "HELP USA",
-    meta: "$5,500/mo | Renewed through Feb 2027 | Tue vCIO + Fri IT check-ins | Shared with Destiny (RoundTable)",
+    meta: "$6,000/mo | Through Feb 2027 | M365 environment | Shared with Destiny (RoundTable)",
+    meetings: [
+      "Tuesdays \u2014 vCIO check-in (time TBC)",
+      "Fridays 3:00 PM ET / 12:00 PM PT \u2014 IT Check-in with Destiny (1 hr)"
+    ],
     categories: [
       {
-        name: "Security Posture Management and Monitoring",
-        icon: "shield",
+        name: "Security Program",
         tasks: [
-          { desc: "Monitor SecurityScorecard and draft remediation communications", detail: "Was 69/D rating; track improvement over time" },
-          { desc: "Review HSB cyber insurance assessment findings", detail: "Compare against SecurityScorecard; Destiny executes, Joshua oversees" },
-          { desc: "Build and maintain security dashboard", detail: "Hosted on Netlify; reviewed with Gina quarterly" },
-          { desc: "Maintain CAO dashboard for board presentations", detail: "Separate dashboard, updated quarterly" },
-          { desc: "Pre-populate security metrics sheets for tracking" },
-          { desc: "Track specific remediation items", detail: "S3 bucket review, subresource integrity, server patching (OpenSSH/Apache)" }
+          { desc: "SecurityScorecard monitoring and remediation", detail: "Track score improvement (was 69/D), draft vendor remediation comms, cyber insurance coordination (HSB/Lambis)" },
+          { desc: "Security dashboards and metrics", detail: "Ops dashboard + CAO board dashboard on Netlify, quarterly reviews with Gina" },
+          { desc: "Incident response and alert triage", detail: "Write incident briefings (e.g., BEC attack analysis), triage M365 Defender alerts, evaluate playbook execution" },
+          { desc: "Annual IR plan cycle management", detail: "January=update, February=tabletop, March=revise cadence" },
+          { desc: "Proactive threat advisories", detail: "Write and send advisories to Gina, Conditional Access hardening, AccountGuard enrollment, social engineering testing" }
         ]
       },
       {
-        name: "Incident Response",
-        icon: "alert",
+        name: "Policy and Governance",
         tasks: [
-          { desc: "Write incident briefings and analysis", detail: "E.g., BEC/phishing incident with full attack timeline and gap analysis" },
-          { desc: "Evaluate incident response playbook execution", detail: "Gap analysis of phases 3-6; identify improvement areas" },
-          { desc: "Triage M365 Defender security alerts", detail: "Analyze forwarded alerts (inbox rules, BEC indicators)" },
-          { desc: "Review incident report quality and completeness" },
-          { desc: "Manage annual IR plan update cycle", detail: "January=update, February=tabletop, March=revise" }
+          { desc: "Security policy development", detail: "Data Classification, TPRM policy, Data Retention Schedule, Change Control Template" },
+          { desc: "AI policy development", detail: "AI Acceptable Use Policy, training slides for LMS delivery" },
+          { desc: "Policy maturity roadmap", detail: "Crawl-walk-run objectives, phased approach to governance" }
         ]
       },
       {
-        name: "Security Advisory and Threat Intelligence",
-        icon: "radar",
+        name: "IT Strategy and Projects",
         tasks: [
-          { desc: "Write and send proactive threat advisories", detail: "E.g., Device Code Phishing campaign targeting nonprofits" },
-          { desc: "Provide M365 Conditional Access configuration guidance", detail: "Specific steps for blocking device code flow" },
-          { desc: "Recommend and guide Microsoft AccountGuard enrollment" },
-          { desc: "Push CA and MFA from report-only to enforcement mode" },
-          { desc: "Coordinate social engineering testing with Evolve Security" }
+          { desc: "IT project lifecycle and process development", detail: "Project/software request forms, lifecycle document, Asana task management" },
+          { desc: "Document inventory and classification project", detail: "~1.15 TB SharePoint/OneDrive, tool evaluation (Purview, Syntex, Shinydocs), $15K-$30K scoping" },
+          { desc: "M365 security hardening", detail: "Passwordless rollout, sensitivity labels, SPF/DMARC/DKIM, ESET encryption, Conditional Access enforcement" },
+          { desc: "Vendor evaluation and selection", detail: "Pen test vendor, helpdesk replacement (ManageEngine), security rating tool comparison" },
+          { desc: "Organizational IT strategy", detail: "Digital competency framework, stakeholder dynamics, org chart awareness" }
         ]
       },
       {
-        name: "Policy Development and Governance",
-        icon: "policy",
+        name: "Meeting and Engagement Management",
         tasks: [
-          { desc: "Draft AI Acceptable Use Policy", detail: "Stored in SharePoint; training slide deck for LMS delivery" },
-          { desc: "Draft Data Classification Policy", detail: "Language approved; Gina owns final formatting" },
-          { desc: "Format and review Third-Party Risk Management policy" },
-          { desc: "Propose Data Retention Schedule" },
-          { desc: "Define crawl-walk-run objectives for policy maturity" },
-          { desc: "Review Change Control Template for technical changes" }
-        ]
-      },
-      {
-        name: "IT Project Management and Process Development",
-        icon: "gear",
-        tasks: [
-          { desc: "Develop IT Project and Software Request Forms" },
-          { desc: "Create IT Project Lifecycle Document", detail: "Business need to plan to change control to execution to metrics to handoff" },
-          { desc: "Maintain Asana project with tasks, dates, and assignments" }
-        ]
-      },
-      {
-        name: "Document Management and Classification",
-        icon: "folder",
-        tasks: [
-          { desc: "Lead document inventory and classification project", detail: "~1.15 TB of SharePoint/OneDrive archives across 2 phases" },
-          { desc: "Gather requirements via interview prompts", detail: "Created ChatGPT prompt for Jeremiah to self-document requirements" },
-          { desc: "Evaluate classification tools", detail: "Purview, SharePoint Premium/Syntex, Shinydocs, ShareGate, Egnyte" },
-          { desc: "Provide cost estimates for document projects", detail: "$15K-$30K estimate for Phases 0+1 with component breakdown" },
-          { desc: "Propose Copilot Studio SOP-generation agent", detail: "Auto-interview staff and generate SOPs to address capacity bottleneck" }
-        ]
-      },
-      {
-        name: "Microsoft 365 Security and Configuration",
-        icon: "device",
-        tasks: [
-          { desc: "Oversee passwordless authentication rollout" },
-          { desc: "Track M365 sensitivity labels expansion" },
-          { desc: "Plan SPF/DMARC/DKIM email authentication", detail: "Coordinate with Anthony and Mary to confirm senders and test" },
-          { desc: "Document ESET encryption (BitLocker) deployment" },
-          { desc: "Harden Conditional Access policies", detail: "Move from report-only to enforcement mode" }
-        ]
-      },
-      {
-        name: "Vendor and Third-Party Management",
-        icon: "building",
-        tasks: [
-          { desc: "Coordinate cyber insurance (HSB + Lambis broker)", detail: "Claims process, incident notification requirements" },
-          { desc: "Compare security rating tools", detail: "SecurityScorecard vs. CyberConcierge evaluation" },
-          { desc: "Manage annual penetration test vendor selection" },
-          { desc: "Advise on helpdesk system replacement", detail: "ManageEngine replacement recommendation" },
-          { desc: "Track website migration status" }
-        ]
-      },
-      {
-        name: "Organizational and IT Strategy",
-        icon: "compass",
-        tasks: [
-          { desc: "Maintain leadership org chart awareness" },
-          { desc: "Draft digital competency framework for L&D" },
-          { desc: "Manage stakeholder dynamics", detail: "Ensure Gina is comfortable as sole vCIO stakeholder" },
-          { desc: "Plan and conduct vCIO program retrospectives" }
-        ]
-      },
-      {
-        name: "Meeting Facilitation",
-        icon: "calendar",
-        tasks: [
-          { desc: "Draft branded HTML agenda emails for check-ins" },
-          { desc: "Review Destiny's meeting summaries" },
-          { desc: "Generate pre-meeting prep documents" },
-          { desc: "Coordinate document requests from Gina/Jeremiah" }
-        ]
-      },
-      {
-        name: "Contract and Business Management",
-        icon: "contract",
-        tasks: [
-          { desc: "Manage contract renewal cycle" },
-          { desc: "Coordinate invoicing with Kim" },
-          { desc: "Manage RoundTable Technology collaboration agreement" }
+          { desc: "Meeting facilitation (Tue vCIO + Fri IT)", detail: "Agenda emails, review Destiny's summaries, prep documents, coordinate with Gina/Jeremiah" },
+          { desc: "Contract management and RoundTable coordination", detail: "Renewal cycle, invoicing with Kim, manage shared engagement agreement with Destiny" }
         ]
       }
     ]
   }
 ];
 
-let scores = {};
-let naFlags = {};
+var scores = {};
+var naFlags = {};
 
-function getTaskId(clientIdx, catIdx, taskIdx) {
-  return 'c' + clientIdx + '_cat' + catIdx + '_t' + taskIdx;
+function tid(ci, catI, ti) { return 'c' + ci + 'k' + catI + 't' + ti; }
+
+function countAll() {
+  var n = 0;
+  DATA.forEach(function(c) { c.categories.forEach(function(cat) { n += cat.tasks.length; }); });
+  return n;
 }
 
-function getBadgeClass(val) {
-  if (val === -1) return 'score-0';
-  if (val === 0) return 'score-0';
-  if (val <= 3) return 'score-low';
-  if (val <= 6) return 'score-mid';
-  if (val <= 9) return 'score-high';
-  return 'score-top';
-}
-
-function createTextEl(tag, text, className) {
-  var el = document.createElement(tag);
-  el.textContent = text;
-  if (className) el.className = className;
-  return el;
-}
-
-function updateScore(id) {
-  var val = parseInt(document.getElementById(id).value);
-  scores[id] = val;
-  var badge = document.getElementById('badge-' + id);
-  badge.textContent = val || '--';
-  badge.className = 'score-badge ' + getBadgeClass(val);
+function setScore(id, val) {
+  if (scores[id] === val) {
+    delete scores[id];
+    val = 0;
+  } else {
+    scores[id] = val;
+    delete naFlags[id];
+  }
+  renderButtons(id, val, false);
   updateSummary();
 }
 
 function toggleNA(id) {
-  naFlags[id] = !naFlags[id];
-  var row = document.getElementById('row-' + id);
-  var slider = document.getElementById(id);
-  var badge = document.getElementById('badge-' + id);
-  var btn = document.getElementById('na-' + id);
-
   if (naFlags[id]) {
-    row.style.opacity = '0.45';
-    slider.disabled = true;
-    badge.textContent = 'N/A';
-    badge.className = 'score-badge score-0';
-    btn.classList.add('active');
-    delete scores[id];
+    delete naFlags[id];
+    renderButtons(id, scores[id] || 0, false);
   } else {
-    row.style.opacity = '1';
-    slider.disabled = false;
-    var val = parseInt(slider.value);
-    badge.textContent = val || '--';
-    badge.className = 'score-badge ' + getBadgeClass(val);
-    btn.classList.remove('active');
-    if (val > 0) scores[id] = val;
+    naFlags[id] = true;
+    delete scores[id];
+    renderButtons(id, 0, true);
   }
   updateSummary();
 }
 
-function countAllTasks() {
-  var total = 0;
-  DATA.forEach(function(c) { c.categories.forEach(function(cat) { total += cat.tasks.length; }); });
-  return total;
+function renderButtons(id, activeVal, isNa) {
+  var row = document.getElementById('row-' + id);
+  if (!row) return;
+  row.style.opacity = isNa ? '0.4' : '1';
+  for (var i = 1; i <= 5; i++) {
+    var btn = document.getElementById(id + '_s' + i);
+    if (btn) {
+      if (activeVal === i && !isNa) {
+        btn.classList.add('selected');
+      } else {
+        btn.classList.remove('selected');
+      }
+    }
+  }
+  var naBtn = document.getElementById(id + '_na');
+  if (naBtn) {
+    if (isNa) { naBtn.classList.add('selected'); } else { naBtn.classList.remove('selected'); }
+  }
 }
 
 function updateSummary() {
-  var total = countAllTasks();
+  var total = countAll();
   var naCount = 0;
   Object.keys(naFlags).forEach(function(k) { if (naFlags[k]) naCount++; });
-  var scorable = total - naCount;
   var scored = 0;
   var vals = [];
   Object.keys(scores).forEach(function(k) {
@@ -598,14 +422,6 @@ function updateSummary() {
 }
 
 function buildApp() {
-  var saved = localStorage.getItem('mtm-capacity-scores');
-  if (saved) {
-    var parsed = JSON.parse(saved);
-    scores = parsed.scores || {};
-    naFlags = parsed.naFlags || {};
-    if (parsed.notes) document.getElementById('globalNotes').value = parsed.notes;
-  }
-
   var app = document.getElementById('app');
 
   DATA.forEach(function(client, ci) {
@@ -614,12 +430,14 @@ function buildApp() {
 
     var header = document.createElement('div');
     header.className = 'client-header';
-
-    var chevron = createTextEl('span', '\u25B6', 'chevron');
+    var chevron = document.createElement('span');
+    chevron.className = 'chevron';
+    chevron.textContent = '\u25B6';
     var h2 = document.createElement('h2');
     h2.textContent = client.client;
-    var meta = createTextEl('span', client.meta, 'client-meta');
-
+    var meta = document.createElement('span');
+    meta.className = 'client-meta';
+    meta.textContent = client.meta;
     header.appendChild(chevron);
     header.appendChild(h2);
     header.appendChild(meta);
@@ -631,62 +449,73 @@ function buildApp() {
       return function() { h.classList.toggle('open'); b.classList.toggle('open'); };
     })(header, body));
 
+    if (client.meetings && client.meetings.length) {
+      var mDiv = document.createElement('div');
+      mDiv.className = 'meeting-schedule';
+      var mTitle = document.createElement('strong');
+      mTitle.textContent = 'Current Meeting Schedule';
+      mDiv.appendChild(mTitle);
+      var mList = document.createElement('ul');
+      client.meetings.forEach(function(m) {
+        var li = document.createElement('li');
+        li.textContent = m;
+        mList.appendChild(li);
+      });
+      mDiv.appendChild(mList);
+      body.appendChild(mDiv);
+    }
+
     client.categories.forEach(function(cat, catI) {
       var catDiv = document.createElement('div');
       catDiv.className = 'category';
-
       var catHeader = document.createElement('div');
       catHeader.className = 'category-header';
       catHeader.textContent = cat.name;
       catDiv.appendChild(catHeader);
 
       cat.tasks.forEach(function(task, ti) {
-        var id = getTaskId(ci, catI, ti);
-        var val = scores[id] !== undefined ? scores[id] : 0;
-        var isNa = naFlags[id] || false;
-
+        var id = tid(ci, catI, ti);
         var row = document.createElement('div');
         row.className = 'task-row';
         row.id = 'row-' + id;
-        if (isNa) row.style.opacity = '0.45';
 
         var descDiv = document.createElement('div');
         descDiv.className = 'task-desc';
         descDiv.appendChild(document.createTextNode(task.desc));
         if (task.detail) {
-          var detailSpan = createTextEl('span', task.detail, 'task-detail');
-          descDiv.appendChild(detailSpan);
+          var det = document.createElement('span');
+          det.className = 'task-detail';
+          det.textContent = task.detail;
+          descDiv.appendChild(det);
         }
 
-        var controlDiv = document.createElement('div');
-        controlDiv.className = 'score-control';
+        var btnsDiv = document.createElement('div');
+        btnsDiv.className = 'score-buttons';
 
-        var slider = document.createElement('input');
-        slider.type = 'range';
-        slider.min = '0';
-        slider.max = '10';
-        slider.value = val;
-        slider.id = id;
-        slider.disabled = isNa;
-        slider.addEventListener('input', (function(tid) { return function() { updateScore(tid); }; })(id));
-
-        var badge = document.createElement('div');
-        badge.id = 'badge-' + id;
-        badge.className = 'score-badge ' + getBadgeClass(isNa ? -1 : val);
-        badge.textContent = isNa ? 'N/A' : (val || '--');
+        for (var s = 1; s <= 5; s++) {
+          var btn = document.createElement('button');
+          btn.className = 'score-btn s' + s;
+          btn.id = id + '_s' + s;
+          btn.textContent = s;
+          btn.title = SCALE_LABELS[s];
+          btn.addEventListener('click', (function(myId, myVal) {
+            return function() { setScore(myId, myVal); };
+          })(id, s));
+          btnsDiv.appendChild(btn);
+        }
 
         var naBtn = document.createElement('button');
-        naBtn.className = 'na-btn' + (isNa ? ' active' : '');
-        naBtn.id = 'na-' + id;
+        naBtn.className = 'score-btn na';
+        naBtn.id = id + '_na';
         naBtn.textContent = 'N/A';
-        naBtn.addEventListener('click', (function(tid) { return function() { toggleNA(tid); }; })(id));
-
-        controlDiv.appendChild(slider);
-        controlDiv.appendChild(badge);
-        controlDiv.appendChild(naBtn);
+        naBtn.title = 'Not applicable / would not transfer';
+        naBtn.addEventListener('click', (function(myId) {
+          return function() { toggleNA(myId); };
+        })(id));
+        btnsDiv.appendChild(naBtn);
 
         row.appendChild(descDiv);
-        row.appendChild(controlDiv);
+        row.appendChild(btnsDiv);
         catDiv.appendChild(row);
       });
 
@@ -699,47 +528,42 @@ function buildApp() {
   });
 
   updateSummary();
-  // Auto-expand first client
   document.querySelector('.client-header').click();
-}
-
-function saveLocal() {
-  localStorage.setItem('mtm-capacity-scores', JSON.stringify({
-    scores: scores, naFlags: naFlags,
-    notes: document.getElementById('globalNotes').value,
-    savedAt: new Date().toISOString()
-  }));
-  showToast('Progress saved locally');
 }
 
 function exportResults() {
   var lines = [];
   lines.push('MTM Client Task Confidence Scoring -- Matthew Peskay');
   lines.push('Exported: ' + new Date().toLocaleString());
-  lines.push('============================================================');
   lines.push('');
+  lines.push('Scale: 1=Need significant guidance, 2=Could learn with support, 3=Moderate confidence, 4=Comfortable minimal help, 5=I\'ve got this');
+  lines.push('============================================================');
 
   DATA.forEach(function(client, ci) {
+    lines.push('');
     lines.push('### ' + client.client);
     lines.push(client.meta);
     lines.push('--------------------------------------------------');
     client.categories.forEach(function(cat, catI) {
       lines.push('');
-      lines.push(cat.name);
+      lines.push(cat.name.toUpperCase());
       cat.tasks.forEach(function(task, ti) {
-        var id = getTaskId(ci, catI, ti);
+        var id = tid(ci, catI, ti);
         var isNa = naFlags[id];
         var val = scores[id];
-        var scoreStr = isNa ? '     N/A' : (val > 0 ? ('   ' + val + '/10').slice(-8) : 'Not scored');
-        lines.push('  [' + scoreStr + ']  ' + task.desc);
-        if (task.detail) lines.push('              > ' + task.detail);
+        var scoreStr;
+        if (isNa) { scoreStr = '  N/A'; }
+        else if (val) { scoreStr = '  ' + val + '/5'; }
+        else { scoreStr = '  ---'; }
+        lines.push('  [' + scoreStr + ' ]  ' + task.desc);
+        if (task.detail) lines.push('           ' + task.detail);
       });
     });
-    lines.push('');
   });
 
   var notesVal = document.getElementById('globalNotes').value.trim();
   if (notesVal) {
+    lines.push('');
     lines.push('============================================================');
     lines.push('ADDITIONAL NOTES:');
     lines.push(notesVal);
@@ -758,22 +582,22 @@ function exportResults() {
   lines.push('');
   lines.push('============================================================');
   lines.push('SUMMARY');
-  lines.push('Average confidence: ' + avg);
+  lines.push('Average confidence: ' + avg + '/5');
   lines.push('Tasks scored: ' + vals.length);
   lines.push('Tasks marked N/A: ' + naCount);
 
   DATA.forEach(function(client, ci) {
-    var clientVals = [];
+    var cv = [];
     client.categories.forEach(function(cat, catI) {
       cat.tasks.forEach(function(task, ti) {
-        var id = getTaskId(ci, catI, ti);
-        if (scores[id] > 0 && !naFlags[id]) clientVals.push(scores[id]);
+        var id = tid(ci, catI, ti);
+        if (scores[id] > 0 && !naFlags[id]) cv.push(scores[id]);
       });
     });
-    var cSum = 0;
-    clientVals.forEach(function(v) { cSum += v; });
-    var cAvg = clientVals.length ? (cSum / clientVals.length).toFixed(1) : 'N/A';
-    lines.push('  ' + client.client + ': ' + cAvg + ' avg (' + clientVals.length + ' scored)');
+    var cs = 0;
+    cv.forEach(function(v) { cs += v; });
+    var ca = cv.length ? (cs / cv.length).toFixed(1) : 'N/A';
+    lines.push('  ' + client.client + ': ' + ca + '/5 avg (' + cv.length + ' scored)');
   });
 
   var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
@@ -789,17 +613,13 @@ function exportResults() {
 }
 
 function expandAll() {
-  var headers = document.querySelectorAll('.client-header');
-  for (var i = 0; i < headers.length; i++) {
-    if (!headers[i].classList.contains('open')) headers[i].click();
-  }
+  var h = document.querySelectorAll('.client-header');
+  for (var i = 0; i < h.length; i++) { if (!h[i].classList.contains('open')) h[i].click(); }
 }
-
 function collapseAll() {
-  var headers = document.querySelectorAll('.client-header.open');
-  for (var i = 0; i < headers.length; i++) { headers[i].click(); }
+  var h = document.querySelectorAll('.client-header.open');
+  for (var i = 0; i < h.length; i++) { h[i].click(); }
 }
-
 function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg;
