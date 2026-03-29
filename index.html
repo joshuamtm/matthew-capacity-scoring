@@ -131,6 +131,16 @@
   }
   .notes-section label { font-weight: 600; margin-bottom: 0.5rem; display: block; color: var(--mtm-dark); }
 
+  .client-notes {
+    margin: 0.75rem 0; padding: 0.75rem 1.25rem;
+    background: white; border-radius: var(--radius); box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .client-notes label { font-weight: 600; font-size: 0.85rem; color: var(--mtm-dark); margin-bottom: 0.4rem; display: block; }
+  .client-notes textarea {
+    width: 100%; height: 80px; padding: 0.6rem; border: 2px solid var(--mtm-border);
+    border-radius: 8px; font-family: inherit; font-size: 0.85rem; resize: vertical;
+  }
+
   .toast {
     position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
     background: var(--mtm-dark); color: white; padding: 0.8rem 1.5rem;
@@ -522,6 +532,18 @@ function buildApp() {
       body.appendChild(catDiv);
     });
 
+    var notesDiv = document.createElement('div');
+    notesDiv.className = 'client-notes';
+    var notesLabel = document.createElement('label');
+    notesLabel.setAttribute('for', 'clientNotes_' + ci);
+    notesLabel.textContent = 'Notes / Questions for Joshua about ' + client.client;
+    var notesArea = document.createElement('textarea');
+    notesArea.id = 'clientNotes_' + ci;
+    notesArea.placeholder = 'Questions, concerns, things you are excited about, areas where you want more context...';
+    notesDiv.appendChild(notesLabel);
+    notesDiv.appendChild(notesArea);
+    body.appendChild(notesDiv);
+
     section.appendChild(header);
     section.appendChild(body);
     app.appendChild(section);
@@ -559,6 +581,13 @@ function exportResults() {
         if (task.detail) lines.push('           ' + task.detail);
       });
     });
+
+    var cn = document.getElementById('clientNotes_' + ci);
+    if (cn && cn.value.trim()) {
+      lines.push('');
+      lines.push('  NOTES FOR THIS CLIENT:');
+      lines.push('  ' + cn.value.trim().replace(/\n/g, '\n  '));
+    }
   });
 
   var notesVal = document.getElementById('globalNotes').value.trim();
